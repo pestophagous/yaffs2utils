@@ -16,8 +16,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef _YAFFS2UTILS_CONFIGS_H
-#define _YAFFS2UTILS_CONFIGS_H
+#ifndef __YAFFS2UTILS_CONFIGS_H__
+#define __YAFFS2UTILS_CONFIGS_H__
 
 #define DEFAULT_CHUNKSIZE	2048
 
@@ -29,6 +29,9 @@
 #if defined(__APPLE__) && defined(__MACH__)
  #define _HAVE_OSX_SYSLIMITS	1
  #define _HAVE_BROKEN_LOFF_T	1
+#endif
+
+#if !defined(__linux__)
  #define _HAVE_BROKEN_MTD_H	1
 #endif
 

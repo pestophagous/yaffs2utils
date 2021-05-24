@@ -23,42 +23,61 @@
  * Luen-Yung Lin <penguin.lin@gmail.com>
  */
 
+#include "configs.h"
+
 #include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
 #include <getopt.h>
 #include <sys/ioctl.h>
+#ifndef _HAVE_BROKEN_MTD_H
 #include <mtd/mtd-user.h>
+#else
+#include "mtd-abi.h"
+#endif
 
-#include "yaffs2utils_io.h"
-#include "yaffs2utils_endian.h"
+#include "safe_rw.h"
+#include "endian_convert.h"
 
-#include "yaffs2utils_version.h"
+#include "version.h"
 
-/*-------------------------------------------------------------------------*/
+/*---------------------------------------------------------------------------*/
 
 #define UNSPARE2_FLAGS_ENDIAN           0x01
 
 #define UNSPARE2_ISENDIAN       (unspare2_flags & UNSPARE2_FLAGS_ENDIAN)
 
-#define UNSPARE2_ERROR(s, args...)      \
-		fprintf(stderr, s, ##args)
+#define UNSPARE2_PRINT(s, args...) \
+		do { \
+			fprintf(stdout, s, ##args); \
+			fflush(stdout); \
+		} while (0)
 
-#define UNSPARE2_WARN(s, args...)       \
-		UNSPARE2_ERROR(s, ##args)
+#define UNSPARE2_ERROR(s, args...) \
+		do { \
+			fprintf(stderr, s, ##args); \
+			fflush(stderr); \
+		} while (0)
 
-#define UNSPARE2_HELP(s, args...)       \
-		UNSPARE2_ERROR(s, ##args)
+#define UNSPARE2_HELP(s, args...)	UNSPARE2_PRINT(s, ##args)
+#define UNSPARE2_WARN(s, args...)	UNSPARE2_ERROR(s, ##args)
 
-/*-------------------------------------------------------------------------*/
+#ifdef _UNSPARE2_DEBUG
+#define UNSPARE2_DEBUG(s, args...)	UNSPARE2_ERROR("%s: " s, \
+						       __FUNCTION__, ##args)
+#else
+#define UNSPARE2_DEBUG(s, args...)
+#endif
+
+/*---------------------------------------------------------------------------*/
 
 static unsigned unspare2_flags = 0;
 
-/*-------------------------------------------------------------------------*/
+/*---------------------------------------------------------------------------*/
 
 static void
-unspare2_endian_transform (nand_ecclayout_t *oob)
+unspare2_endian_convert (nand_ecclayout_t *oob)
 {
 	unsigned i, eccpos_entries, oobfree_entries;
 
@@ -75,7 +94,7 @@ unspare2_endian_transform (nand_ecclayout_t *oob)
 	}
 }
 
-/*-------------------------------------------------------------------------*/
+/*---------------------------------------------------------------------------*/
 
 static int
 unspare2_dump (const char *devfile, const char *imgfile)
@@ -103,7 +122,7 @@ unspare2_dump (const char *devfile, const char *imgfile)
 
 	/* endian transform */
 	if (UNSPARE2_ISENDIAN)
-		unspare2_endian_transform(&oob);
+		unspare2_endian_convert(&oob);
 
 	/* write data back to the file */
 	if ((fd = open(imgfile, O_WRONLY | O_CREAT | O_TRUNC, 0644)) < 0) {
@@ -125,22 +144,19 @@ unspare2_dump (const char *devfile, const char *imgfile)
 	return retval;
 }
 
-/*-------------------------------------------------------------------------*/
+/*---------------------------------------------------------------------------*/
 
 static void
 unspare2_helper (void)
 {
-	UNSPARE2_HELP("Usage: unspare2 devfile imgfile\n");
-	UNSPARE2_HELP("unspare2: A utility to extract the OOB layout\n");
-	UNSPARE2_HELP("version: %s\n", YAFFS2UTILS_VERSION);
+	UNSPARE2_HELP("unspare2 %s - A utility to extract the OOB layout\n\n", YAFFS2UTILS_VERSION);
+	UNSPARE2_HELP("Usage: unspare2 devfile imgfile\n\n");
 	UNSPARE2_HELP("options:\n");
-	UNSPARE2_HELP(" -h	");
-	UNSPARE2_HELP("display this help message and exit\n");
-	UNSPARE2_HELP(" -e	");
-	UNSPARE2_HELP("convert the endian differed from the local machine\n");
+	UNSPARE2_HELP("  -h  display this help message and exit.\n");
+	UNSPARE2_HELP("  -e  convert the endian differed from the local machine.\n");
 }
 
-/*-------------------------------------------------------------------------*/
+/*---------------------------------------------------------------------------*/
 
 int
 main (int argc, char **argv)
@@ -154,12 +170,6 @@ main (int argc, char **argv)
 		{"help",	no_argument,	0, 'h'},
 		{"endian",	no_argument,	0, 'e'},
 	};
-
-	printf("unspare2-%s: OOB extracting tool for yaffs2utils\n",
-		YAFFS2UTILS_VERSION);
-
-	if (getuid() != 0)
-		UNSPARE2_WARN("warning: non-root users\n");
 
 	while ((option = getopt_long(argc, argv, short_options,
 				     long_options, &option_index)) != EOF)
@@ -184,6 +194,12 @@ main (int argc, char **argv)
 
 	devpath = argv[optind];
 	imgpath = argv[optind + 1];
+
+	UNSPARE2_PRINT("unspare2 %s: OOB extracting tool for yaffs2utils\n",
+			YAFFS2UTILS_VERSION);
+
+	if (getuid() != 0)
+		UNSPARE2_WARN("warning: non-root users\n");
 
 	retval = unspare2_dump(devpath, imgpath);
 
