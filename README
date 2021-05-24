@@ -1,3 +1,23 @@
+----------- FORK ADVISORY. Begin section from pestophagous ---------------------
+
+I learned about this set of utils thanks to https://askubuntu.com/a/281178/231504
+
+I have little to no expertise regarding this codebase.
+
+All I know is that a 0.2 edition of `unyaffs2` successfully extracted a `yaffs2`
+disk image when I attempted it on Ubuntu 18.04.5 LTS in May 2021.
+
+I found the "dead" project https://code.google.com/archive/p/yaffs2utils/downloads
+via askubuntu (link above). Then I found justsoso8/yaffs2utils on GitHub when I
+searched to see if the old Google Code edition of the codebase had been migrated
+to GitHub.
+
+I made my own fork from justsoso8/yaffs2utils when I discovered that justsoso8/yaffs2utils
+appeared to contain a copy of the 0.1 code instead of the 0.2 code.
+
+----------- /END FORK ADVISORY. End section from pestophagous ------------------
+
+
 yaffs2utils
 -----------
 The yaffs2utils is the collection of utilities to make/extract a YAFFS2/YAFFS1
